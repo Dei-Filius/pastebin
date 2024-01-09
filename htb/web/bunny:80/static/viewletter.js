@@ -1,9 +1,9 @@
-fetch("http://188.166.175.58:31165/letters?id=1")
+fetch("http://localhost/letters?id=3")
     .then((res) => {
         res.json();
     })
     .then((data) =>
-        fetch("http://188.166.175.58:31165/submit", {
+        fetch("http://localhost/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: data }),
