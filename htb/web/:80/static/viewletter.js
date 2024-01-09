@@ -1,7 +1,11 @@
-fetch("http://localhost/letters?id=3").then((res) => {
-    fetch("http://localhost/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: res.text() }),
-    }).then((res) => console.log(res));
-});
+fetch("http://188.166.175.58:31165/letters?id=1")
+    .then((res) => {
+        res.json();
+    })
+    .then((data) =>
+        fetch("http://188.166.175.58:31165/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: data }),
+        }).then()
+    );
