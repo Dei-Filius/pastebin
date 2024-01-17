@@ -8,21 +8,6 @@ from typing import Callable
 from tqdm import tqdm
 
 
-# ignore. made for fun one
-def timer(duration_sec: int):
-    from sys import stdout
-    from time import sleep
-
-    seconds_per_unit = duration_sec / 60
-    for i in range(61):
-        stdout.write(
-            f"\r[{ '#'*i + '.'*(60-i) }] | {i*seconds_per_unit:.1f}/{duration_sec}"
-        )
-        stdout.flush()
-        sleep(seconds_per_unit)
-    stdout.write("\n")
-
-
 # validate the user inputs into brute()
 def validate(
     instances: int, gen_data: Callable, worker: Callable, result_handler: Callable
