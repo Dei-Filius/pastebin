@@ -41,9 +41,9 @@ def warlord(
     out,
 ):
     # try:
-    def handler(s, f):
-        raise KeyboardInterrupt
-    signal(SIGINT, handler)
+    # def handler(s, f):
+    #     raise KeyboardInterrupt
+    # signal(SIGINT, handler)
     tqdm.set_lock(lock)
     with Pool(pool_size, signal, (SIGINT, SIG_IGN)) as pool:
         try:
