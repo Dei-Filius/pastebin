@@ -8,21 +8,26 @@ from typing import Callable
 from tqdm import tqdm
 
 
+# ignore. made for fun one
+def timer(duration_sec: int):
+    from sys import stdout
+    from time import sleep
+
+    seconds_per_unit = duration_sec / 60
+    for i in range(61):
+        stdout.write(
+            f"\r[{ '#'*i + '.'*(60-i) }] | {i*seconds_per_unit:.1f}/{duration_sec}"
+        )
+        stdout.flush()
+        sleep(seconds_per_unit)
+    stdout.write("\n")
+
+
 # validate the user inputs into brute()
 def validate(
-    instances: int, gen_data: Callable, worker: Callable, result_handler: Callable
+    instances: int, gen_data: Callable, worker: Callable, result_checker: Callable
 ):
     ...
-
-
-def worker_init():
-    signal(SIGINT, SIG_IGN)
-
-
-def warlord_init():
-    def handler(s, f):
-        raise KeyboardInterrupt
-    signal(SIGINT, handler)
 
 
 def warlord(
@@ -31,14 +36,16 @@ def warlord(
     pool_size: int,
     data: tuple | list,
     worker: Callable,
-    result_handler: Callable,
+    result_checker: Callable,
     is_found: Event,
     out,
 ):
     # try:
-    warlord_init()
+    def handler(s, f):
+        raise KeyboardInterrupt
+    signal(SIGINT, handler)
     tqdm.set_lock(lock)
-    with Pool(pool_size, worker_init) as pool:
+    with Pool(pool_size, signal, (SIGINT, SIG_IGN)) as pool:
         try:
             with tqdm(
                 total=len(data),
@@ -49,7 +56,7 @@ def warlord(
                 try:
                     for result in pool.imap_unordered(worker, data):
                         bar.update()
-                        halt = result_handler(result)
+                        halt = result_checker(result)
                         if halt:
                             out.value = result
                             is_found.set()
@@ -67,8 +74,8 @@ def warlord(
     print("past halt test", getattr(out, "value"))
 
 
-def run(instances: int, gen_data: Callable, worker: Callable, result_handler: Callable):
-    validate(instances, gen_data, worker, result_handler)
+def run(instances: int, gen_data: Callable, worker: Callable, result_checker: Callable):
+    validate(instances, gen_data, worker, result_checker)
     print("pid:", getpid())
 
     WARRIORS = 60
@@ -98,7 +105,7 @@ def run(instances: int, gen_data: Callable, worker: Callable, result_handler: Ca
             pool_size,
             data[data_start:data_end],
             worker,
-            result_handler,
+            result_checker,
             is_found,
             out,
         ]
@@ -112,7 +119,7 @@ def run(instances: int, gen_data: Callable, worker: Callable, result_handler: Ca
             pool_size + instances % q,
             data[data_chunk * (q - 1) :],
             worker,
-            result_handler,
+            result_checker,
             is_found,
             out,
         ]
@@ -132,12 +139,18 @@ def run(instances: int, gen_data: Callable, worker: Callable, result_handler: Ca
         #         print("kill")
         #         kill(lord.pid, CTRL_C_EVENT)
 
+        # for num, lord in enumerate(lords, 1):
+        #     print(lord.pid)
+        #     if lord.is_alive():
+        #         kill(lord.pid, CTRL_C_EVENT)
+        #     else:
+        #         lord.terminate()
+
         for num, lord in enumerate(lords, 1):
-            print(lord.pid)
-            if lord.is_alive():
-                kill(lord.pid, CTRL_C_EVENT)
-            else:
-                lord.terminate()
+            lord.terminate()
+            lord.join()
+            print(f"[warlord {num}]: stopped")
+        print("[main] warlords joined")
 
     except KeyboardInterrupt:
         for num, lord in enumerate(lords, 1):
