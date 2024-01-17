@@ -29,7 +29,7 @@ def worker(datum: int):
 
 # result handler must correspond with worker function's output
 # Return True will halt the parallism and False means to continue
-def result_handler(result):
+def result_checker(result):
     if (
         result
         == b'\x95\xb8-8\x99 \x0c\xfeK\x7fb\xb21\x9fxu\xd8\xdb\xfa -\xda\xb9,\xf9_\xa3\x06}\xf0\x8d\x95'
@@ -40,4 +40,4 @@ def result_handler(result):
 
 # this "if" is a must or else will error. idky
 if __name__ == "__main__":
-    print(brute.run(150, gen_data, worker, result_handler))
+    print(brute.run(64, gen_data, worker, result_checker))
