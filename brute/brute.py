@@ -9,7 +9,6 @@ from tqdm import tqdm
 from time import sleep
 
 
-
 # validate the user inputs into brute()
 def validate(
     instances: int, gen_data: Callable, worker: Callable, result_checker: Callable
