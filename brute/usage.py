@@ -31,8 +31,8 @@ def worker(datum: int):
 # Return True will halt the parallism and False means to continue
 def result_checker(result):
     if (
-        result
-        == b'\x95\xb8-8\x99 \x0c\xfeK\x7fb\xb21\x9fxu\xd8\xdb\xfa -\xda\xb9,\xf9_\xa3\x06}\xf0\x8d\x95'
+        result[1]
+        == b"\xc0\x00H\xf3\xa4:\xfb\xa0c\xc1\x0e`\xdeY\xd7V\xb8&j\xd80\x0ej\x88\xd5\x93Og\xa1\x9f\x81L"
     ):
         return True
     return False
