@@ -1,11 +1,12 @@
 from ctypes import c_char_p
-from multiprocessing import Manager, Pool, Process, RLock, Value
+from multiprocessing import Manager, Pool, Process, RLock, Value, active_children
 from os import getpid, kill
-from signal import CTRL_C_EVENT, SIG_IGN, SIGINT, signal, SIGTERM
+from signal import CTRL_C_EVENT, SIG_IGN, SIGINT, signal, SIGTERM, SIGBREAK
 from threading import Event, RLock
 from typing import Callable
 
 from tqdm import tqdm
+from time import sleep
 
 
 # ignore. made for fun one
@@ -40,10 +41,6 @@ def warlord(
     is_found: Event,
     out,
 ):
-    # try:
-    # def handler(s, f):
-    #     raise KeyboardInterrupt
-    # signal(SIGINT, handler)
     tqdm.set_lock(lock)
     with Pool(pool_size, signal, (SIGINT, SIG_IGN)) as pool:
         try:
@@ -51,27 +48,43 @@ def warlord(
                 total=len(data),
                 position=num,
                 bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]",
+                leave=False,
             ) as bar:
-                bar.display()
                 try:
                     for result in pool.imap_unordered(worker, data):
-                        bar.update()
-                        halt = result_checker(result)
-                        if halt:
-                            out.value = result
-                            is_found.set()
-                            raise KeyboardInterrupt
+                        if not is_found.is_set():
+                            bar.update()
+                            halt = result_checker(result)
+                            if halt:
+                                out.value = result[0]
+                                is_found.set()
+                                break
+                            # break
+                            # raise KeyboardInterrupt
+                        else:
+                            # bar.close()
+                            # pool.terminate()
+                            # pool.join()
+                            # # return
+                            # raise KeyboardInterrupt
+                            break
+
                 except KeyboardInterrupt:
-                    bar.clear()
+                    bar.close()
+                    # bar.close()
+                    # pool.terminate()
+                    # pool.join()
                     raise KeyboardInterrupt
         except KeyboardInterrupt:
             pool.terminate()
             pool.join()
-                # print(f"[warlord {num}] KeyboardInterrupt")
+            # pool.close()
+            # print(f"[warlord {num}] KeyboardInterrupt")
     # except KeyboardInterrupt:
     #     # print(f"[warlord {num}] KeyboardInterrupt")
     #     pass
-    print("past halt test", getattr(out, "value"))
+    # for child in active_children():
+    #     child.terminate()
 
 
 def run(instances: int, gen_data: Callable, worker: Callable, result_checker: Callable):
@@ -127,12 +140,50 @@ def run(instances: int, gen_data: Callable, worker: Callable, result_checker: Ca
         lords.append(p)
 
     print("Let's begin")
+
+    for lord in lords:
+        lord.start()
+
     try:
-        for lord in lords:
-            lord.start()
+        # for lord in lords:
+        #     lord.join()
+
+        # sleep(5)
+        # kill(0, CTRL_C_EVENT)
 
         is_found.wait()
-        print("[main] is found")
+
+        for lord in lords:
+            print("joining", lord.pid)
+            lord.join()
+
+        # return out.value
+        # raise KeyboardInterrupt
+
+        # for lord in lords:
+        #     if lord.is_alive():
+        #         kill(lord.pid, CTRL_C_EVENT)
+
+        # lord.join()
+        # sleep(30)
+
+        while True:
+            print("fyaksjfhskjdhfksjdhf" + out.value)
+            print(out.value)
+
+        # for lord in active_children():
+        #     lord.terminate()
+        #     lord.join()
+
+        # print("[main] is found", flush=True)
+        # kill(0, CTRL_C_EVENT)
+
+        # for lord in lords:
+        #     kill(lord.pid, CTRL_C_EVENT)
+        #     lord.join()
+        #     print("lord", lord.pid)
+        # sleep(10)
+        # print(getattr(out, "value"))
 
         # for num, lord in enumerate(lords, 1):
         #     if lord.pid is not None:
@@ -146,19 +197,39 @@ def run(instances: int, gen_data: Callable, worker: Callable, result_checker: Ca
         #     else:
         #         lord.terminate()
 
-        for num, lord in enumerate(lords, 1):
-            lord.terminate()
-            lord.join()
-            print(f"[warlord {num}]: stopped")
-        print("[main] warlords joined")
+        # is_found.wait()
+        # for lord in lords:
+        #     lord.terminate()
+        #     lord.join()
+        # print(getattr(out, "value", None))
+        # # print(out.value)
+
+        # for num, lord in enumerate(lords, 1):
+        #     # lord.terminate()
+        #     lord.join()
+        #     # print(num, lord.is_alive())
+        #     print(f"[warlord {num}]: stopped")
+        #     print(1, getattr(out, "value"))
+        # print("[main] warlords joined f")
+        # print(2, getattr(out, "value"))
 
     except KeyboardInterrupt:
+        print(
+            "akfsjddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddhjdhskjdhfks"
+        )
+        # for child in active_children():
+        #     child.terminate()
+        #     child.join()
         for num, lord in enumerate(lords, 1):
+            # if lord.is_alive():
+            # #     kill(lord.pid, CTRL_C_EVENT)
+            #     lord.terminate()
             lord.join()
-            print(f"[warlord {num}]: stopped")
-        print("[main] warlords joined")
+            print(f"[warlord {num}]: stopped", flush=True)
+        print("tf", getattr(out, "value", None))
+        print("[main] warlords joined due to KeyboardInterrupt", flush=True)
 
-    return getattr(out, "value")
+    return getattr(out, "value", None)
 
 
 if __name__ == "__main__":
